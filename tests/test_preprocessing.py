@@ -2,6 +2,7 @@ import pytest
 from pathlib import Path
 from src.preprocessing.cleaner import TextCleaner
 from src.preprocessing.tokenizer import Tokenizer
+from src.preprocessing.speller import IndonesianSpeller
 
 def test_cleaner_removes_punctuation_and_symbols():
     cleaner = TextCleaner()
@@ -30,3 +31,23 @@ def test_stemmer_indonesian():
     tokens = ["memakan", "minuman", "berjalan"]
     stemmed = tokenizer.stem(tokens)
     assert stemmed == ["makan", "minum", "jalan"]
+
+def test_levenshtein_distance():
+    assert IndonesianSpeller.levenshtein_distance("kucing", "kucing") == 0
+    assert IndonesianSpeller.levenshtein_distance("kucing", "kuceng") == 1
+    assert IndonesianSpeller.levenshtein_distance("ekonomy", "ekonomi") == 1
+    assert IndonesianSpeller.levenshtein_distance("ekonomy", "ekonom") == 1
+
+def test_speller_corrections():
+    vocab = {"vaksin", "covid", "ekonomi", "indonesia", "bpjs"}
+    speller = IndonesianSpeller(vocabulary=vocab)
+    
+    corrected, has_changes = speller.correct_query("vaksen cofed")
+    assert has_changes
+    assert corrected == "vaksin covid"
+    
+    # Unchanged
+    corrected, has_changes = speller.correct_query("indonesia ekonomi")
+    assert not has_changes
+    assert corrected == "indonesia ekonomi"
+

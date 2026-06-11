@@ -101,10 +101,55 @@ pytest tests/
 ---
 
 ## 📈 Search Metrics & Evaluation
-This search engine supports standard evaluation metrics including:
-- **Precision@K & Recall@K**
-- **MAP (Mean Average Precision)**
-- **NDCG@K (Normalized Discounted Cumulative Gain)**
-- **MRR (Mean Reciprocal Rank)**
 
-Metrics are safely implemented with division-by-zero guards and conform to NumPy 2.0 compatibility standards.
+Sistem dilengkapi dengan komponen evaluasi otomatis (*offline evaluation benchmark*) untuk membandingkan kualitas hasil pencarian dari ketiga ranker (TF-IDF, BM25, dan Hybrid) menggunakan query ground-truth yang telah ditentukan di [ground_truth.json](file:///Users/auliamuzhaffar/Documents/Projek/Search-Engine/data/ground_truth.json).
+
+### Hasil Evaluasi Resmi
+
+Menjalankan `PYTHONPATH=. python scripts/benchmark.py` menghasilkan perbandingan performa berikut:
+
+| Metric | TF-IDF | BM25 | Hybrid | Best |
+| :--- | :--- | :--- | :--- | :--- |
+| P@5 | 0.2400 | 0.2400 | 0.2400 | **TF-IDF** |
+| P@10 | 0.1200 | 0.1200 | 0.1200 | **TF-IDF** |
+| MAP | 1.0000 | 1.0000 | 1.0000 | **TF-IDF** |
+| NDCG@10 | 1.0000 | 1.0000 | 1.0000 | **TF-IDF** |
+| MRR | 1.0000 | 1.0000 | 1.0000 | **TF-IDF** |
+
+> [!NOTE]
+> Metrik di atas dihitung menggunakan data contoh kecil hasil crawl berita. Peringkat pencarian dapat bervariasi bergantung pada jumlah total korpus berita yang di-crawl.
+
+---
+
+## 🔍 Spell Correction & Query Expansion
+
+Sistem menyediakan fitur koreksi ejaan otomatis (spell checker) berbasis bahasa Indonesia offline:
+*   Membangun basis kosakata (*vocabulary*) secara langsung dari kata-kata yang terindeks dalam inverted index.
+*   Menggunakan algoritma **Levenshtein Distance** (jarak edit) untuk mendeteksi salah ketik dengan toleransi maksimum jarak $\le 2$ edit.
+*   Menawarkan rekomendasi pencarian ("Did you mean / Apakah Anda melewatkan...?") secara asinkron di Web UI ketika pengguna memasukkan kueri yang terindikasi salah eja (contoh: `"bpjs keshata"` -> `"bpjs kesehatan"`).
+
+---
+
+## 🚀 Deployment Guidelines
+
+Aplikasi pencarian ini siap di-deploy ke platform cloud modern seperti **Railway** atau **Render** menggunakan kontainer Docker atau runner Python langsung.
+
+### Pilihan 1: Deploy Menggunakan Docker (Direkomendasikan)
+Aplikasi telah dilengkapi dengan `Dockerfile` multi-stage yang mengoptimalkan ukuran image.
+1.  Pastikan project terhubung ke repositori GitHub Anda.
+2.  Di platform Railway/Render, buatlah layanan baru dan pilih opsi **Deploy from GitHub repository**.
+3.  Platform akan secara otomatis mendeteksi `Dockerfile` dan menjalankan build kontainer.
+4.  Expose port `8000` (atau port dinamis via environment variable `PORT`).
+
+### Pilihan 2: Deploy Menggunakan Python Native (Render/Railway Web Service)
+1.  **Build Command**:
+    ```bash
+    pip install -r requirements.txt && PYTHONPATH=. python scripts/preprocess.py && PYTHONPATH=. python scripts/index.py
+    ```
+2.  **Start Command**:
+    ```bash
+    PYTHONPATH=. uvicorn src.api.app:app --host 0.0.0.0 --port $PORT
+    ```
+3.  **Environment Variables**:
+    *   `PORT`: Port dinamis yang disediakan oleh platform (biasanya otomatis).
+    *   `PYTHONPATH`: `.` (ditambahkan agar modul dapat diimpor dengan benar).

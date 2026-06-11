@@ -42,6 +42,7 @@ cleaner = TextCleaner()
 tokenizer = Tokenizer()
 ranker = HybridRanker()
 index_builder = InvertedIndex()
+speller = None
 
 # Global state for document cache and index
 documents_cache: List[str] = []
@@ -53,7 +54,7 @@ def load_data_and_fit():
     """
     Loads preprocessed documents and fits the rankers.
     """
-    global documents_cache, doc_names_cache, urldoc_cache, index_last_built
+    global documents_cache, doc_names_cache, urldoc_cache, index_last_built, speller
     
     logger.info("Loading documents and fitting rankers...")
     
@@ -98,6 +99,10 @@ def load_data_and_fit():
     else:
         logger.warning("No preprocessed documents found. Search might not return results.")
 
+    # Initialize / reload Indonesian speller
+    from src.preprocessing.speller import IndonesianSpeller
+    speller = IndonesianSpeller()
+
 @app.on_event("startup")
 def startup_event():
     load_data_and_fit()
@@ -138,6 +143,16 @@ def api_search(
     if method not in ["tfidf", "bm25", "hybrid"]:
         raise HTTPException(status_code=400, detail="Invalid ranking method. Choose tfidf, bm25, or hybrid.")
         
+    # Check for spelling suggestion
+    spelling_suggestion = None
+    if speller:
+        try:
+            corrected_q, has_correction = speller.correct_query(q)
+            if has_correction:
+                spelling_suggestion = corrected_q
+        except Exception as e:
+            logger.error(f"Error running speller for query '{q}': {e}")
+
     # Preprocess the query (clean and stem)
     cleaned_query = cleaner.clean(q)
     stemmed_query_tokens = tokenizer.tokenize_and_stem(cleaned_query)
@@ -150,6 +165,7 @@ def api_search(
         return {
             "query": q,
             "method": method,
+            "spelling_suggestion": spelling_suggestion,
             "total_results": 0,
             "latency_ms": round((time.time() - start_time) * 1000, 2),
             "results": []
@@ -205,6 +221,7 @@ def api_search(
     return {
         "query": q,
         "method": method,
+        "spelling_suggestion": spelling_suggestion,
         "total_results": len(results),
         "latency_ms": latency_ms,
         "results": results

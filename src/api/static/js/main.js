@@ -8,6 +8,8 @@ const resultsLatency = document.getElementById('resultsLatency');
 const resultsLoading = document.getElementById('resultsLoading');
 const introSection = document.getElementById('introSection');
 const searchContainer = document.getElementById('searchContainer');
+const spellingSuggestion = document.getElementById('spellingSuggestion');
+const spellingSuggestionLink = document.getElementById('spellingSuggestionLink');
 
 // Modal Elements
 const docModal = document.getElementById('docModal');
@@ -43,6 +45,7 @@ async function handleSearch(event) {
     resultsLoading.classList.remove('hidden');
     resultsList.innerHTML = '';
     resultsStats.classList.add('hidden');
+    spellingSuggestion.classList.add('hidden');
 
     try {
         const response = await fetch(`/api/v1/search?q=${encodeURIComponent(query)}&method=${method}&top_k=15`);
@@ -59,6 +62,19 @@ async function handleSearch(event) {
         resultsStats.classList.remove('hidden');
         resultsCount.innerText = data.total_results;
         resultsLatency.innerText = `${data.latency_ms} ms`;
+
+        // Display spelling suggestion
+        if (data.spelling_suggestion) {
+            spellingSuggestionLink.innerText = data.spelling_suggestion;
+            spellingSuggestionLink.onclick = (e) => {
+                e.preventDefault();
+                queryInput.value = data.spelling_suggestion;
+                handleSearch();
+            };
+            spellingSuggestion.classList.remove('hidden');
+        } else {
+            spellingSuggestion.classList.add('hidden');
+        }
         
         // Render Results
         if (data.results && data.results.length > 0) {
