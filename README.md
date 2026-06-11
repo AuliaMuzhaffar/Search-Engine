@@ -102,7 +102,7 @@ pytest tests/
 
 ## 📈 Search Metrics & Evaluation
 
-Sistem dilengkapi dengan komponen evaluasi otomatis (*offline evaluation benchmark*) untuk membandingkan kualitas hasil pencarian dari ketiga ranker (TF-IDF, BM25, dan Hybrid) menggunakan query ground-truth yang telah ditentukan di [ground_truth.json](file:///Users/auliamuzhaffar/Documents/Projek/Search-Engine/data/ground_truth.json).
+Sistem dilengkapi dengan komponen evaluasi otomatis (*offline evaluation benchmark*) untuk membandingkan kualitas hasil pencarian dari ketiga ranker (TF-IDF, BM25, dan Hybrid) menggunakan query ground-truth yang telah ditentukan di [data/ground_truth.json](data/ground_truth.json).
 
 ### Hasil Evaluasi Resmi
 
