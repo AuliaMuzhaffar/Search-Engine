@@ -22,7 +22,13 @@ def sanitize_filename(title: str) -> str:
     filename = "".join(c for c in short_title if c.isalnum() or c.isspace()).rstrip()
     return f"{filename}.txt" if filename else "untitled.txt"
 
+import argparse
+
 def main():
+    parser = argparse.ArgumentParser(description="Download and preprocess articles")
+    parser.add_argument("--limit", type=int, default=None, help="Limit number of articles to process")
+    args, _ = parser.parse_known_args()
+
     logger.info("Initializing preprocessor...")
     cleaner = TextCleaner()
     tokenizer = Tokenizer()
@@ -43,6 +49,10 @@ def main():
 
     with open(links_file, 'r', encoding='utf-8') as f:
         urls = [line.strip() for line in f if line.strip()]
+
+    if args.limit:
+        urls = urls[:args.limit]
+        logger.info(f"Limiting to first {args.limit} URLs.")
 
     logger.info(f"Found {len(urls)} URLs to process.")
     
@@ -104,13 +114,20 @@ def main():
             tokens = tokenizer.tokenize(cleaned_text)
             stemmed_tokens = tokenizer.stem(tokens)
             
+            # Save original raw text for snippet extraction and document serving
+            raw_articles_dir = settings.RAW_ARTICLES_DIR
+            raw_articles_dir.mkdir(parents=True, exist_ok=True)
+            raw_file_path = raw_articles_dir / filename
+            with open(raw_file_path, 'w', encoding='utf-8') as raw_f:
+                raw_f.write(raw_text)
+
             # Save preprocessed tokens
             output_file_path = settings.PROCESSED_DIR / filename
             with open(output_file_path, 'w', encoding='utf-8') as out_f:
                 out_f.write('\n'.join(stemmed_tokens))
                 
             urldoc[filename] = url
-            logger.info(f"Saved preprocessed text to {output_file_path.name}")
+            logger.info(f"Saved preprocessed & raw text to {output_file_path.name}")
             
             # Delay to avoid overloading the site
             time.sleep(settings.CRAWL_DELAY_SECONDS)

@@ -6,6 +6,7 @@ class Settings:
     BASE_DIR: Path = Path(__file__).resolve().parent.parent
     DATA_DIR: Path = BASE_DIR / "data"
     RAW_DIR: Path = DATA_DIR / "raw"
+    RAW_ARTICLES_DIR: Path = RAW_DIR / "articles"
     PROCESSED_DIR: Path = DATA_DIR / "processed"
     INDEX_DIR: Path = DATA_DIR / "index"
     STOPWORDS_PATH: Path = DATA_DIR / "stopwords.txt"

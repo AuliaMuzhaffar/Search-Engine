@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aulia Search — AI-Powered Indonesian News Engine</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS v4 Browser Compiler -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225,39%,12%,1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(260,31%,11%,1) 0, transparent 50%);
+        }
+        h1, h2, h3, .font-outfit {
+            font-family: 'Outfit', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-input {
+            background: rgba(10, 15, 26, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-input:focus {
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.25);
+        }
+        /* Custom skeleton pulse for loading states */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(31,41,55,0.4) 25%, rgba(55,65,81,0.5) 50%, rgba(31,41,55,0.4) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col antialiased">
+
+    <!-- Header / Navigation -->
+    <header class="w-full max-w-7xl mx-auto px-6 py-4 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3 select-none">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <span class="text-xl font-extrabold text-white font-outfit">AS</span>
+            </div>
+            <div>
+                <span class="text-lg font-extrabold tracking-tight font-outfit bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Aulia Search</span>
+                <span class="block text-[10px] text-indigo-400 font-semibold tracking-wider uppercase">Indonesian News Engine</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <!-- Stats Button (Trigger panel) -->
+            <button onclick="toggleStatsModal()" class="glass-panel px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-400/30 transition-all flex items-center gap-2 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2" />
+                </svg>
+                Engine Status
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow flex flex-col justify-start items-center px-6 py-12 max-w-4xl w-full mx-auto z-10 transition-all duration-500" id="searchContainer">
+        
+        <!-- Search Intro / branding (will be hidden/minimized on search) -->
+        <div id="introSection" class="text-center mb-10 max-w-xl transition-all duration-500">
+            <h1 class="text-4xl md:text-5xl font-black font-outfit tracking-tight leading-none mb-4 bg-gradient-to-br from-white via-slate-100 to-indigo-300 bg-clip-text text-transparent">
+                Search Indonesian News, Elevated by AI.
+            </h1>
+            <p class="text-sm md:text-base text-slate-400 font-light leading-relaxed">
+                Discover news articles with lexical, probabilistic, or hybrid ranking models. Refactored into a high-performance vector retrieval framework.
+            </p>
+        </div>
+
+        <!-- Search Bar and Controls Form -->
+        <form onsubmit="handleSearch(event)" class="w-full max-w-3xl flex flex-col gap-4 mb-8">
+            <div class="relative w-full rounded-2xl glass-panel p-2 shadow-2xl transition-all duration-300 hover:border-slate-600/35">
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                    <!-- Text Input -->
+                    <div class="relative flex-grow">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input 
+                            type="text" 
+                            id="queryInput" 
+                            placeholder="Cari berita (misal: vaksin covid, inflasi ekonomi)..." 
+                            class="w-full pl-12 pr-4 py-3 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none text-sm font-medium"
+                            required
+                        >
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="hidden md:block w-[1px] h-8 bg-slate-800"></div>
+
+                    <!-- Algorithm Selection Dropdown -->
+                    <div class="relative min-w-[140px] flex items-center px-2">
+                        <select 
+                            id="methodSelect" 
+                            class="w-full bg-transparent text-slate-300 font-medium text-xs py-2 pr-6 border-none focus:outline-none appearance-none cursor-pointer"
+                        >
+                            <option value="hybrid" class="bg-[#0b0f19]">Hybrid (Consolidated)</option>
+                            <option value="bm25" class="bg-[#0b0f19]">BM25 (Probabilistic)</option>
+                            <option value="tfidf" class="bg-[#0b0f19]">TF-IDF (Cosine)</option>
+                        </select>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute right-4 h-4 w-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+
+                    <!-- Search Button -->
+                    <button 
+                        type="submit" 
+                        class="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                        Search
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Stats Results Header (Hidden initially) -->
+        <div id="resultsStats" class="w-full flex justify-between items-center text-xs text-slate-500 px-2 mb-6 hidden">
+            <span>Menampilkan <strong id="resultsCount" class="text-slate-300">0</strong> hasil pencarian</span>
+            <span>Latency: <strong id="resultsLatency" class="text-indigo-400">0 ms</strong></span>
+        </div>
+
+        <!-- Skeleton Loading Loader (Hidden initially) -->
+        <div id="resultsLoading" class="w-full flex flex-col gap-4 hidden">
+            <div class="glass-panel p-6 rounded-2xl flex flex-col gap-3">
+                <div class="skeleton h-5 w-3/4 rounded"></div>
+                <div class="skeleton h-3 w-1/4 rounded"></div>
+                <div class="skeleton h-4 w-full rounded mt-2"></div>
+                <div class="skeleton h-3 w-1/2 rounded"></div>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl flex flex-col gap-3">
+                <div class="skeleton h-5 w-2/3 rounded"></div>
+                <div class="skeleton h-3 w-1/4 rounded"></div>
+                <div class="skeleton h-4 w-full rounded mt-2"></div>
+                <div class="skeleton h-3 w-2/3 rounded"></div>
+            </div>
+        </div>
+
+        <!-- Search Results list -->
+        <div id="resultsList" class="w-full flex flex-col gap-4"></div>
+    </main>
+
+    <!-- Document Detail Full Modal (Hidden initially) -->
+    <div id="docModal" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/70 backdrop-blur-md hidden transition-opacity duration-300">
+        <div class="glass-panel max-w-3xl w-full max-h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-slate-800 flex justify-between items-start gap-4">
+                <div>
+                    <span id="modalDocType" class="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase bg-indigo-950 text-indigo-400 mb-2"></span>
+                    <h3 id="modalDocTitle" class="text-xl font-bold font-outfit text-white leading-tight"></h3>
+                </div>
+                <button onclick="closeDocModal()" class="p-1 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition-all cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <!-- Modal Content (Scrollable) -->
+            <div class="p-6 overflow-y-auto flex-grow text-slate-300 leading-relaxed text-sm md:text-base space-y-4" id="modalDocContent"></div>
+            <!-- Modal Footer -->
+            <div class="p-6 bg-slate-950/40 border-t border-slate-800 flex justify-between items-center gap-4">
+                <a id="modalDocUrl" href="#" target="_blank" class="text-xs text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1.5 font-medium">
+                    Buka Artikel Asli
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                </a>
+                <button onclick="closeDocModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-all cursor-pointer">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engine Status Modal (Hidden initially) -->
+    <div id="statsModal" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/70 backdrop-blur-md hidden transition-opacity duration-300">
+        <div class="glass-panel max-w-md w-full rounded-3xl overflow-hidden shadow-2xl">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-lg font-bold font-outfit text-white">Indonesian Search Engine Status</h3>
+                <button onclick="toggleStatsModal()" class="p-1 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition-all cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl text-center">
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Dokumen</span>
+                        <strong id="statDocsCount" class="text-2xl font-extrabold text-white font-outfit">0</strong>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl text-center">
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Term di Index</span>
+                        <strong id="statTermsCount" class="text-2xl font-extrabold text-white font-outfit">0</strong>
+                    </div>
+                </div>
+
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between py-2 border-b border-slate-800">
+                        <span class="text-slate-400 font-medium">Index Last Built</span>
+                        <span id="statIndexBuilt" class="text-slate-200 font-semibold">Unknown</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-slate-800">
+                        <span class="text-slate-400 font-medium">Raw Directory status</span>
+                        <span id="statRawDir" class="text-emerald-400 font-semibold">Active</span>
+                    </div>
+                    <div class="flex justify-between py-2">
+                        <span class="text-slate-400 font-medium">Processed status</span>
+                        <span id="statProcessedDir" class="text-emerald-400 font-semibold">Active</span>
+                    </div>
+                </div>
+
+                <hr class="border-slate-800 my-4">
+
+                <!-- Rebuild Index Section -->
+                <div class="p-4 rounded-xl bg-slate-950/40 border border-slate-800 text-center">
+                    <span class="block text-xs font-semibold text-slate-300 mb-2">Rebuild / Update Inverted Index</span>
+                    <button 
+                        id="rebuildBtn" 
+                        onclick="triggerRebuildIndex()" 
+                        class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-lg active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                        Rebuild Index
+                    </button>
+                    <span class="block text-[9px] text-slate-500 mt-2">Ini akan mendownload berita baru dan men-stem ulang dokumen. Dapat memakan waktu beberapa menit di background.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-6 text-slate-600 text-xs border-t border-slate-900 mt-auto select-none">
+        <p>© 2026 Aulia Muzhaffar. Mentored by Antigravity. Open Source MIT License.</p>
+    </footer>
+
+    <!-- Main Logic Script -->
+    <script src="/js/main.js"></script>
+</body>
+</html>
